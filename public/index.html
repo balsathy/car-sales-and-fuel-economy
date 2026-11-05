@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vehicle Data Chatbot</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: #172c3c;
+      background: #eaf3f1;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: min(100% - 32px, 820px);
+      margin: 0 auto;
+      padding: clamp(32px, 8vh, 76px) 0 42px;
+      background:
+        radial-gradient(ellipse at 85% 4%, rgba(201, 231, 112, .4), transparent 34%),
+        radial-gradient(ellipse at 7% 26%, rgba(185, 225, 222, .55), transparent 35%);
+      background-attachment: fixed;
+    }
+    h1 {
+      margin: 8px 0;
+      color: #123b40;
+      font-size: clamp(2.5rem, 8vw, 4.1rem);
+      letter-spacing: -.065em;
+      line-height: 1;
+    }
+    h1::before {
+      content: "ROAD TRIP DATA CLUB";
+      display: block;
+      margin-bottom: 14px;
+      color: #4b726d;
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+    }
+    h1::after { content: " 🚙"; font-size: .56em; vertical-align: .12em; }
+    h2 { margin: 0; color: #173c3d; font-size: 1.35rem; letter-spacing: -.025em; }
+    .subtle { color: #45635f; line-height: 1.65; }
+    body > .subtle { max-width: 620px; margin: 14px 0 18px; font-size: 1.05rem; }
+    #status {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 16px;
+      padding: 8px 13px;
+      border: 1px solid #d4e5d6;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .72);
+      color: #315a4e;
+      font-size: .84rem;
+      font-weight: 650;
+    }
+    #status::before {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #69a84e;
+      box-shadow: 0 0 0 3px #e2f1d8;
+      content: "";
+    }
+    .chat {
+      overflow: hidden;
+      margin: 0 0 16px;
+      padding: clamp(18px, 4vw, 30px);
+      border: 1px solid rgba(255, 255, 255, .8);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 24px 70px rgba(37, 76, 70, .12), 0 3px 10px rgba(37, 76, 70, .06);
+    }
+    .chat-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .chat-heading h2 { margin: 0; }
+    .clear-button { min-height: 38px; padding: 8px 12px; background: transparent; color: #4c625d; font-size: .82rem; }
+    .clear-button:hover { background: #f0f5f2; color: #234a43; }
+    #messages {
+      display: flex;
+      min-height: 156px;
+      max-height: 390px;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      padding: 18px 12px;
+      border: 1px solid #e6eeea;
+      border-radius: 16px;
+      background: #f7faf8;
+      scroll-behavior: smooth;
+    }
+    #messages:empty::before {
+      align-self: flex-start;
+      max-width: 85%;
+      padding: 12px 16px;
+      border: 1px solid #e1ebe4;
+      border-radius: 5px 17px 17px;
+      background: white;
+      color: #49645d;
+      content: "Hi! Ask me about car sales or fuel economy. I’ll look it up in the downloaded data.";
+      font-size: .95rem;
+      line-height: 1.55;
+    }
+    .message {
+      width: fit-content;
+      max-width: min(88%, 620px);
+      margin: 0;
+      padding: 12px 16px;
+      border-radius: 17px;
+      font-size: .96rem;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    .user {
+      align-self: flex-end;
+      border-radius: 17px 5px 17px 17px;
+      background: #1b5552;
+      color: #fff;
+      font-weight: 650;
+    }
+    .assistant {
+      align-self: flex-start;
+      border: 1px solid #e1ebe4;
+      border-radius: 5px 17px 17px;
+      background: #fff;
+      color: #263d3d;
+      box-shadow: 0 2px 6px rgba(37, 76, 70, .04);
+    }
+    label { display: block; margin: 22px 0 8px; color: #304c48; font-size: .9rem; font-weight: 700; }
+    input {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 15px;
+      border: 1.5px solid #c9d9d1;
+      border-radius: 13px;
+      outline: none;
+      background: #fff;
+      color: #172c3c;
+      font: inherit;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+    input::placeholder { color: #71847d; }
+    input:focus-visible { border-color: #24786a; box-shadow: 0 0 0 4px rgba(36, 120, 106, .15); }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 12px; }
+    button {
+      min-height: 44px;
+      padding: 10px 15px;
+      border: 0;
+      border-radius: 12px;
+      background: #e9f2ee;
+      color: #284f47;
+      cursor: pointer;
+      font: inherit;
+      font-size: .9rem;
+      font-weight: 700;
+      transition: background .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
+    }
+    button[type="submit"] { padding-inline: 22px; background: #b6df64; color: #233d2c; }
+    button:hover { transform: translateY(-1px); background: #dcebe3; }
+    button[type="submit"]:hover { background: #c6ea7c; box-shadow: 0 5px 14px rgba(125, 165, 55, .22); }
+    button:focus-visible { outline: 3px solid #217a6a; outline-offset: 3px; }
+    button:active { transform: translateY(0); }
+    button:disabled { cursor: wait; opacity: .6; }
+    .note {
+      margin: 18px 4px;
+      padding: 14px 16px;
+      border-left: 3px solid #83a89a;
+      border-radius: 0 12px 12px 0;
+      background: rgba(255, 255, 255, .45);
+      color: #4c625d;
+      font-size: .84rem;
+      line-height: 1.7;
+    }
+    code { padding: 2px 5px; border-radius: 5px; background: rgba(23, 76, 68, .08); color: #174c44; }
+    @media (max-width: 520px) {
+      body { width: min(100% - 22px, 820px); padding-top: 36px; }
+      .chat { padding: 17px 14px; border-radius: 19px; }
+      .chat-heading { align-items: flex-start; }
+      #messages { min-height: 140px; padding: 12px 9px; }
+      .message { max-width: 94%; font-size: .92rem; }
+      .row button.sample { flex: 1 1 100%; text-align: left; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Vehicle Data Chatbot</h1>
+  <p class="subtle">Explore U.S. car sales and fuel economy. Ask a question and discover what the data says.</p>
+  <p id="status" class="subtle" aria-live="polite">Checking downloaded data…</p>
+
+  <section class="chat" aria-label="Chatbot">
+    <div class="chat-heading">
+      <h2>Ask a question</h2>
+      <button id="clear-chat" class="clear-button" type="button" aria-label="Clear chat messages">Clear chat</button>
+    </div>
+    <div id="messages" role="log" aria-live="polite"></div>
+    <form id="form">
+      <label for="question">Question about sales or mileage</label>
+      <input id="question" autocomplete="off" placeholder="How many Honda CR-Vs sold in 2025?" required>
+      <div class="row">
+        <button type="submit">Ask</button>
+        <button type="button" class="sample">Which car has the best mileage?</button>
+        <button type="button" class="sample">Which model sold the most in 2025?</button>
+      </div>
+    </form>
+  </section>
+  <p class="note">Sales come from GoodCarBadCar; its model coverage may vary, and it does not label estimates row by row. 2026 sales are year-to-date. EPA ratings are for model-year configurations, not sales-weighted model averages. EV ratings use MPGe and hydrogen ratings use miles per kilogram, so neither is mixed with MPG.</p>
+  <script>
+    const status = document.querySelector("#status");
+    const messages = document.querySelector("#messages");
+    const input = document.querySelector("#question");
+    async function request(url, body) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Request failed");
+      return result;
+    }
+    async function updateStatus() {
+      const data = await (await fetch("/api/status")).json();
+      if (!data.sales_records || !data.mileage_records) {
+        status.textContent = "Vehicle data is not available right now.";
+        return;
+      }
+      status.textContent = `Loaded ${data.sales_records.toLocaleString()} monthly sales records and ` +
+        `${data.mileage_records.toLocaleString()} EPA vehicle configurations.`;
+    }
+    function addMessage(text, kind) {
+      const element = document.createElement("p");
+      element.className = `message ${kind}`;
+      element.textContent = text;
+      messages.append(element);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    document.querySelector("#clear-chat").addEventListener("click", () => {
+      messages.replaceChildren();
+      input.value = "";
+      input.focus();
+    });
+    async function askQuestion(question) {
+      question = question.trim();
+      if (!question) return;
+      addMessage(question, "user");
+      input.value = "";
+      try {
+        const result = await request("/api/chat", { message: question });
+        addMessage(result.answer, "assistant");
+      } catch (error) {
+        addMessage(`Sorry, the request failed: ${error.message}`, "assistant");
+      }
+    }
+    document.querySelector("#form").addEventListener("submit", event => {
+      event.preventDefault();
+      askQuestion(input.value);
+    });
+    document.querySelectorAll(".sample").forEach(button => button.addEventListener("click", () => {
+      askQuestion(button.textContent);
+    }));
+    updateStatus().catch(error => { status.textContent = `Could not load status: ${error.message}`; });
+  </script>
+</body>
+</html>
